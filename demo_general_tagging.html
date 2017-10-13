@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>通用图像识别</title>
+        <meta name="description" content="">
+        <meta name="author" content="ccx">
+        <meta name="viewport" content="width=device-width; initial-scale=1.0">
+        <link rel="shortcut icon" href="http://www.lianty.com/content/site/common/img/icon_32.ico" type="image/x-icon">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/webuploader.js"></script>
+    <script src="/js/waterfall.min.js"></script>    
+    <style type="text/css" media="screen">
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        *, *:before, *:after {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }        
+        html, body {
+            height: 100%;
+            font-family: "微软雅黑";
+        }
+        ul li {
+            list-style-type: none;
+        }
+        .webuploader-container {
+            position: relative;
+        }
+        .webuploader-element-invisible {
+            position: absolute !important;
+            clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+            clip: rect(1px,1px,1px,1px);
+        }
+        .webuploader-pick {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: #3385ff;
+            width: 100%;
+            height: 40px;
+            line-height: 40px;
+            color: #fff;
+            text-align: center;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .webuploader-pick-hover {
+            opacity: .8;
+        }
+        .webuploader-pick-disable {
+            opacity: 0.6;
+            pointer-events:none;
+        }  
+          
+        .body-left {
+            float: left;
+            width: 40%;
+            height: 100%;
+            padding: 20px;
+            border-right: 1px solid #E1E1E1;
+            overflow: hidden;
+        }      
+        .body-right {
+            float: right;
+            width: 60%;
+            height: 100%;
+            padding: 20px;
+        }
+        .title {
+            font-size: 14px;
+            font-weight: 700;            
+        }
+        .info {
+            height: 40px;
+            line-height: 38px;
+            color: #7B7B7B;
+            font-size: 12px;
+        }
+        .default-img-list {
+            padding: 20px 0;
+            overflow: hidden;
+        }
+        .default-img-list > ul {
+            display: flex;
+            display: -webkit-flex;
+        }
+        .default-img-list > ul > li {
+            position: relative;
+            display: flex;
+            display: -webkit-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            border: 2px solid #F8F8F8; 
+            cursor: pointer;
+            background-size: cover;
+            background-position: 50% 50%;
+        }
+        .default-img-list > ul > li:last-child {
+            margin-right: 0px;
+        }
+        .default-img-list > ul > li.active,
+        .default-img-list > ul > li:hover {
+            border-color: #3385ff;
+        }
+        .style-test-result .title,
+        .style-test-other-result .title {
+            height: 32px;
+            line-height: 30px;
+            font-weight: 700;
+        }
+        .style-test-result .title img,
+        .style-test-other-result .title img {
+            margin-right: 10px; 
+            vertical-align: top;
+        }
+        .style-test-result .item {
+            margin: 15px 0;
+        }
+        .style-test-result .item .title {
+            float: left;
+            width: 90px;
+        }
+        .style-test-result .item-list {
+            float: left;
+            /*width: calc(100% - 90px);*/
+        }
+        .style-test-result .item-list > li {
+            display: inline-block;
+            margin: 0 20px 15px 0;
+            color: #666;
+            text-align: center;
+        }
+        .style-test-result .item-style .item-list > li {
+            margin-bottom: 10px;
+        }
+        .style-test-result .item-list > li .line {
+            display: none;
+            font-size: 12px;
+            text-align: left;                  
+        }  
+        .show-debug .style-test-result .item-list > li .line {
+            display: block;
+        }
+        .hide-debug .style-test-result .item-list > li .line {
+            display: none;
+        }        
+        .style-test-result .item-list > li .text {
+            width: 90px;
+            height: 32px;
+            line-height: 30px;
+            border: 1px solid #E1E1E1;
+            text-align: center;
+            border-radius: 20px;
+            font-size: 12px;            
+        }
+        .style-test-other-result {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .show-debug .style-test-other-result {
+            display: block;
+        } 
+        .hide-debug .style-test-other-result {
+            display: none;
+        }         
+        .other-list {
+/*            display: flex;
+            flex-wrap: wrap;*/
+            width: 100%;
+            margin: 10px 0;
+        }    
+        .other-list > li {
+            margin: 0 10px 40px 0;
+            display: inline-block;
+        }  
+        .other-list > li img {
+            max-width: 190px;
+            max-height: 190px;
+        }
+        #waterfall-loading, 
+        #waterfall-message {
+            display: none;
+        }
+        .no-data {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin: 20px 0;            
+        } 
+        .select {
+            color: #666;                       
+        }   
+        #type {
+            color: #7B7B7B;
+            padding: 0px 5px;
+        }
+        .body-opt {
+            display: none;
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }  
+        .body-opt > .opt {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: .3;            
+        }
+        .body-opt > p {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -9px;
+            margin-left: -52px;
+            color: #FFF;
+        } 
+        .big-img {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 410px;
+        } 
+        .big-img .bg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .ml-link {
+            float: right;
+            text-decoration: none;
+            color: #000;            
+        }
+        .ml-link img {
+            vertical-align: middle !important;
+        }
+        .style-test-other-result a {
+            position: relative;
+            display: block;
+        }
+        .sp-tag {
+            width: 100%;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            position: absolute;
+            bottom: -15px;
+            left: 0;
+        }
+        .sp-jl {
+            width: 100%;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            position: absolute;
+            bottom: -35px;
+            left: 0;            
+        }
+    </style>
+    </head>
+    <body>
+        <div class="body-left">
+            <div id="uploaderTest">   
+                <div class="title">
+                    <div style="float: left;">通用图像识别测试区</div>
+                    <div class="select"  style="float: right;">
+                        调试模式：
+                        <select name="dist" id="type">
+                            <option value="0">否</option>
+                            <option value="1">是</option>
+                        </select>
+                    </div>
+                    <div style="clear: both;"></div>                
+                </div> 
+                <div class="info">请上传测试图片，或从以下照片中选择一张开始测试。</div>
+                <div class="uploader-btn"> 
+                    <div id="filePicker">上传测试图片</div>   
+                </div>             
+            </div>
+            <div class="default-img-list">
+                <ul>
+                </ul>
+            </div>
+            <div class="big-img">
+                <img class="bg" />
+            </div>
+        </div>
+        <div class="body-right" style="overflow-y: scroll;">
+            <div class="style-test-result">
+                <p class="title">
+                   <img src="/img/logo.png" />图中标签
+                   <a class="ml-link" href="https://www.productai.cn/demo_general_tagging" target="_block"><img src="/img/logo2.png" />与码隆科技对比</a></p> 
+                <div class="content">
+                    <p class="no-data">正在加载中...</p>
+                </div>          
+            </div>
+            <div class="style-test-other-result">
+                <p class="title"><img src="/img/logo.png" />类似图片（<span id="storNum"></span>）</p>
+
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+        <div class="body-opt"><div class="opt"></div></div>
+        <script type="text/javascript">  
+             var $list = $("#uploaderList"); 
+             var $btn = $("#ctlBtn"); //自动上传，不需要手动上传按扭
+             var thumbnailWidth = 100; 
+             var thumbnailHeight = 100;
+             var sendUrl = '/site/getTag';
+             //var sendUrl = '/site/getTypeAndStyle'; 
+             var stUrl = 'http://www.lianty.com/yunFile/getLtyYunFileByStId';
+             var stImg = 'http://file.lianty.com:8080/yuanyin_file/ltyimg/showImgByKey?key=';
+            
+             var uploader = WebUploader.create({  
+                 // 选完文件后，是否自动上传。  
+                 auto: true,  
+            
+                 // swf文件路径  
+                 swf: 'js/Uploader.swf',  
+            
+                 // 文件接收服务端。  
+                 server: sendUrl,  
+            
+                 // 选择文件的按钮。可选。  
+                 // 内部根据当前运行是创建，可能是input元素，也可能是flash. 
+                 dnd: document.body, //指定Drag And Drop拖拽的容器，如果不指定，则不启动
+                 disableGlobalDnd: true, //是否禁掉整个页面的拖拽功能，如果不禁用，图片拖进来的时候会默认被浏览器打开。
+                 paste: document.body, //指定监听paste事件的容器，如果不指定，不启用此功能。此功能为通过粘贴来添加截屏的图片。建议设置为document.body. 
+                 
+                 pick: '#filePicker',  
+            
+                 // 只允许选择图片文件。  
+                 accept: {  
+                     title: 'Images',  
+                     extensions: 'gif,jpg,jpeg,bmp,png',  
+                     mimeTypes: '.png,.jpg,.jpeg,.gif,.bmp,.PNG,.JPG,.JPEG,.GIF,.BMP'  
+                 },  
+                 method:'POST',
+                 threads: 1, 
+                 fileNumLimit: 1 //验证文件总数量, 超出则不允许加入队列。  
+             });  
+             // 当有文件添加进来的时候  
+             uploader.on( 'fileQueued', function( file ) {  // webuploader事件.当选择文件后，文件被加载到文件队列中，触发该事件。等效于 uploader.onFileueued = function(file){...} ，类似js的事件定义。  
+                $('.body-opt').show();
+                $('.style-test-result').find('.content').html('<p class="no-data">正在加载中...</p>');              
+             });  
+             //当某个文件在发送前触发，主要用来询问是否要添加附带参数
+             uploader.on( 'uploadBeforeSend', function(block, data, headers) {
+                //var type = $('#type').val();
+                //if( type == 1 ){
+                //每次都调调试模式    
+                data["dist"] = 1;
+                //}
+             });             
+             // 文件上传过程中创建进度条实时显示。  
+             uploader.on( 'uploadProgress', function( file, percentage ) {  
+                 replacText('上传中...')               
+             });  
+            
+             // 文件上传成功，给item添加成功class, 用样式标记上传成功。  
+             uploader.on( 'uploadSuccess', function( file, callback ) {  
+                console.log('上传的图片：', file)
+                console.log('返回的数据：', callback)
+                callbackFn(callback)
+             });  
+            
+             // 文件上传失败，显示上传出错。  
+             uploader.on( 'uploadError', function( file ) { 
+                 alert('服务器异常：上传失败'); 
+             });  
+            
+             // 完成上传完了，成功或者失败，先删除进度条。  
+             uploader.on( 'uploadComplete', function( file ) { 
+                $('.body-opt').hide();
+                replacText('上传测试图片'); 
+                uploader.reset();
+             });
+             function ajaxFn(data) {
+                //var postData = {url: data.url, searchType: data.searchType};
+                //if( data.dist == 1 ){
+                    postData = {url: data.url, searchType: data.searchType, dist: data.dist}; 
+               // }
+                $.ajax({
+                    url: sendUrl,
+                    data: postData,
+                    type: 'post',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('.body-opt').show();
+                        $('.style-test-result').find('.content').html('<p class="no-data">正在加载中...</p>');
+                    },
+                    success: function(res){
+                        console.log('提交后台参数：', data)
+                        console.log('后台返回的数据：', res)
+                        $('.body-opt').hide();                        
+                        replacText('上传测试图片');
+                        if( res ){
+                            res['searchType'] = data.searchType;                             
+                            callbackFn(res);
+                        }
+                    },
+                    error: function(error){
+                        $('.body-opt').hide();
+                        $('.style-test-result').find('.content').html('<p class="no-data">暂无数据</p>');
+                        replacText('上传测试图片');                             
+                        alert('服务器异常：上传失败');
+                    }
+                })                 
+             }
+             function clickSendFn() {
+                $('.default-img-list > ul > li').off('click').on('click', function(){
+                    $(this).addClass('active').siblings('li').removeClass('active');
+                    replacText('上传中...');                    
+                    var url = $(this).data('url');
+                    ajaxFn({url: url, searchType: 2, dist: 1});
+                    $('.big-img .bg').attr('src', url);                    
+                })                 
+             }
+             function replacText(text) {
+                 var $statu = $('#filePicker').find('.webuploader-pick');
+                 $statu.text(text);                
+             }
+             function callbackFn(callback){
+                var imgHtml = '',
+                    maxWidth = $('.default-img-list').width() - 40,
+                    _w = maxWidth/5;                 
+                if( !callback.searchType ){
+                    imgHtml += '<li style="width: '+ _w +'px; height: '+ _w +'px; background-image:url('+ callback.orgImgUrl +');" class="active" data-url="'+ callback.orgImgUrl +'" ></li>';
+                    if( callback.data && callback.data.length > 0 ){
+                        callback.data.forEach(function(item, index){
+                            if( index == callback.data.length - 1 ) return;
+                            imgHtml += '<li style="width: '+ _w +'px; height: '+ _w +'px; background-image:url('+ item.url +');" data-url="'+ item.url +'"></li>'
+                        })
+                    }  
+                    $('.default-img-list > ul').html(imgHtml)
+                    $('.big-img .bg').attr('src', callback.orgImgUrl);                  
+                }else{
+                    if( callback.data && callback.data.length > 0 ){
+                        callback.data.forEach(function(item, index){
+                            if( callback.orgImgUrl && item.url == callback.orgImgUrl ){
+                                imgHtml += '<li style="width: '+ _w +'px; height: '+ _w +'px; background-image:url('+ item.url +');" data-url="'+ item.url +'" class="active"></li>'
+                            }else{
+                                imgHtml += '<li style="width: '+ _w +'px; height: '+ _w +'px; background-image:url('+ item.url +');" data-url="'+ item.url +'"></li>'
+                            }
+                        })
+                        $('.default-img-list > ul').html(imgHtml);
+                        if( callback.orgImgUrl ){
+                            $('.big-img .bg').attr('src', callback.orgImgUrl); 
+                        }else{
+                            $('.big-img .bg').attr('src', callback.data[0].url); 
+                        }
+                    }
+                }
+
+                if( callback.searchType == 1 && callback.data ){
+                    //初始化时触发第一图片请求
+                    //初始化type为0，不传
+                    ajaxFn({url: callback.data[0].url, searchType: 2, dist: 1})
+                }
+                clickSendFn()                                               
+                if( callback && callback.errorCode == 0){
+                    var tagHtml = '<div class="item item-type"><ul class="item-list">',
+                        noHtml = '<p class="no-data">没有数据</p>';
+
+                    if( callback.tagList && callback.tagList .length > 0 ){
+                        callback.tagList .forEach(function(item, index){
+                            var arr = item.split(',');
+                            var liHtml = '<li>'
+                            if( arr.length > 0 ){
+                                arr.forEach(function(elem, idex){
+                                    if( idex == 0 ){
+                                        liHtml += '<p class="text">'+ elem +'</p>'
+                                    }else{
+                                        liHtml += '<p class="line">'+ elem +'</p>'
+                                    }
+                                })
+                            }
+                            liHtml += '</li>'
+                            tagHtml += liHtml
+                        })
+                        tagHtml += '</ul><div style="clear: both;"></div></div>';
+                        $('.style-test-result > .content').html(tagHtml);  
+                    }    
+                    if( callback.stDataList && callback.stDataList.length > 0 ){
+                        var ulDom = $('.style-test-other-result'),
+                            linkHtml = '<ul class="other-list">';
+                        ulDom.find('.other-list').remove(); 
+                        callback.stDataList.forEach(function(item, index){
+                            linkHtml += '<li class="item"><a href="'+ item.sourceUrl +'" target="_black"><img src="'+ (stImg+item.middlePath) +'"><span class="sp-tag" title="'+ item.tag +'">tag：'+ item.tag +'</span><span class="sp-jl" title="'+ item.distance +'">dis：'+ item.distance +'</span></a></li>'
+                        })
+                        linkHtml += '</ul>'                                                                        
+                        ulDom.append(linkHtml);
+                        $('#storNum').html(callback.imgCount)                                                        
+                    }else{
+                        //$('.style-test-other-result').append('<p class="no-data">暂无数据</p>');
+                    }               
+                    // if( callback.stIdList && callback.stIdList.length > 0 ){
+                    //     var ulDom = $('.style-test-other-result'),
+                    //         linkHtml = '<ul class="other-list">';
+                    //     ulDom.find('.other-list').remove();
+                    //     var resData = callback.stIdList;       
+                    //     var stIdArray = callback.stIdList.map(item => item.stId);
+                    //     $.ajax({
+                    //         url: stUrl+'?stId='+ stIdArray.join(','),
+                    //         type: 'get',
+                    //         dataType: 'json',
+                    //         success: function(res){
+                    //             console.log('识图提交后台参数：', stIdArray)
+                    //             console.log('识图后台返回的数据：', res)
+                    //             if( res && res.data && res.data.length > 0 ){  
+                    //                 res.data.forEach(function(item, index){
+                    //                     linkHtml += '<li class="item"><a href="'+ item.sourceUrl +'" target="_black"><img src="'+ (stImg+item.middlePath) +'"></a></li>'
+                    //                 })
+                    //                 linkHtml += '</ul>'                                                                        
+                    //                 ulDom.append(linkHtml);                                                        
+                    //             }else{
+                    //                 $('.style-test-other-result').append('<p class="no-data">暂无数据</p>');
+                    //             }
+                    //         },
+                    //         error: function(error){
+                    //             $('.style-test-other-result').append('<p class="no-data">暂无数据</p>');
+                    //         }
+                    //     }) 
+                    // }                  
+                }else{
+                    //$('.big-img .bg').attr('src', '');
+                    $('.style-test-result > .content').html('<p class="no-data">'+ callback.error +'</p>')
+                }
+             }
+             //初始化调用一下
+             //初始化type为0，不传
+             ajaxFn({url: null, searchType: 1, dist: 1})
+
+             //调试模式选择
+             $('#type').on('change', function(){
+                 if( $(this).val() == 1 ){
+                    $('.body-right').addClass('show-debug').removeClass('hide-debug');
+                    // $('.style-test-result .item-list > li .line').show();
+                    // $('.style-test-other-result').show();
+                 }else{
+                    $('.body-right').addClass('hide-debug').removeClass('show-debug');
+                    // $('.style-test-result .item-list > li .line').hide();
+                    // $('.style-test-other-result').hide();
+                 } 
+             })     
+         </script>        
+    </body>
+</html>
